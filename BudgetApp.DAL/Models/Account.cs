@@ -7,7 +7,7 @@ namespace BudgetApp.DAL.Models
     {
         public int AccountID { get; set; }
         public string AccountName { get; set; }
-        public DateTime MyProperty { get; set; } = DateTime.Now;
+        public DateTime AccountOpenDate { get; set; } = DateTime.Now;
         public decimal Balance { get; set; }
         public int AccountTypeID { get; set; }
         public decimal? BalanceLimit { get; set; }

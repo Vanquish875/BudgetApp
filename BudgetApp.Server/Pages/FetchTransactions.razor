@@ -1,0 +1,52 @@
+﻿@page "/Transactions"
+
+@using BudgetApp.DAL.Queries
+@using BudgetApp.DAL.Models
+@using BudgetApp.DAL.Repository.Interfaces
+
+@inject ITransactionRepository _db
+
+<h3>Transactions</h3>
+
+
+@if (transactions == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Account:</th>
+                <th>Amount:</th>
+                <th>Category:</th>
+                <th>Transaction Type:</th>
+                <th>Recurring Charge?:</th>
+                <th>Transaction Date:</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var transaction in transactions)
+            {
+                <tr>
+                    <td>@transaction.AccountName</td>
+                    <td>@transaction.Amount.ToString("0.00")</td>
+                    <td>@transaction.Category</td>
+                    <td>@transaction.TransactionTypeName</td>
+                    <td>@(transaction.Recurring == 1)</td>
+                    <td>@transaction.TransactionDate</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IList<TransactionAccount> transactions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        transactions = await _db.GetTransactions();
+    }
+}

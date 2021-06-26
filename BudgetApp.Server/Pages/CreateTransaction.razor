@@ -1,0 +1,110 @@
+﻿@page "/CreateTransaction"
+
+@using BudgetApp.Server.Models
+@using BudgetApp.DAL.Models
+@using BudgetApp.DAL.Repository.Interfaces
+@using BudgetApp.DAL.Queries
+@inject IAccountRepository _accoundDB
+@inject ICategoryRepository _categoryDB
+@inject ITransactionTypeRepository _transactionTypeDB
+@inject ITransactionRepository _db
+@inject NavigationManager NavigationManager
+
+<h3>CreateTransaction</h3>
+
+@if (accounts == null || categories == null || transactionTypes == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="@newTransaction" OnValidSubmit="@InsertTransaction">
+        <div class="form-field">
+            <label>Account:</label>
+            <select class="form-control" @bind="newTransaction.AccountID">
+                @foreach (var account in accounts)
+                {
+                    <option value="@account.AccountID">@account.AccountNameType</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label>Amount:</label>
+            <div>
+                <InputNumber @bind-Value="newTransaction.Amount" />
+                <ValidationMessage For="@(() => newTransaction.Amount)" />
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label>Category:</label>
+            <select class="form-control" @bind="newTransaction.CategoryID">
+                @foreach (var category in categories)
+                {
+                    <option value="@category.CategoryID">@category.Category</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label>Type:</label>
+            <select class="form-control" @bind="newTransaction.TransactionTypeID">
+                @foreach (var type in transactionTypes)
+                {
+                    <option value="@type.TransactionTypeID">@type.TransactionTypeName</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label>Recurring Charge:</label>
+            <InputCheckbox @bind-Value="newTransaction.Recurring" />
+        </div>
+
+        @if (newTransaction.Recurring)
+        {
+            <div class="form-field">
+                <label>Recurring Date:</label>
+                <div>
+                    <InputDate @bind-Value="newTransaction.RecurringDate" />
+                    <ValidationMessage For="@(() => newTransaction.RecurringDate)" />
+                </div>
+            </div>
+        }
+        <div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    private TransactionViewModel newTransaction = new TransactionViewModel();
+    private IList<AccountTypeNameCombine> accounts;
+    private IList<CategoryType> categories;
+    private IList<TransactionType> transactionTypes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        accounts = await _accoundDB.GetAccountTypeNames();
+        categories = await _categoryDB.GetCategories();
+        transactionTypes = await _transactionTypeDB.GetTransactionTypes();
+    }
+
+    private async Task InsertTransaction()
+    {
+        Transaction transaction = new Transaction
+        {
+            AccountID = newTransaction.AccountID,
+            Amount = newTransaction.Amount,
+            //TransactionDate = DateTime.UtcNow,
+            CategoryID = newTransaction.CategoryID,
+            TransactionTypeID = newTransaction.TransactionTypeID,
+            Recurring = newTransaction.Recurring,
+            RecurringDate = newTransaction.RecurringDate
+        };
+        await _db.CreateTransaction(transaction);
+
+        NavigationManager.NavigateTo("/Transactions");
+    }
+}

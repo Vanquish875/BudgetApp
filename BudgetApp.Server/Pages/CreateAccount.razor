@@ -1,0 +1,110 @@
+﻿@page "/CreateAccount"
+
+@using BudgetApp.DAL.Models
+@using BudgetApp.Server.Models
+@using BudgetApp.DAL.Repository.Interfaces
+@inject NavigationManager NavigationManager
+@inject IAccountRepository _db
+@inject ICategoryRepository _categoryDB
+@inject IAccountTypeRepository _dbAt
+
+<h3>Create Account</h3>
+@if (accountTypes == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="@newAccount" OnValidSubmit="@InsertAccount">
+        <div class="form-field">
+            <label>Account Type:</label>
+            <select class="form-control" @bind="newAccount.AccountTypeID">
+                @foreach (var type in accountTypes)
+                {
+                    <option value="@type.AccountTypeID">@type.AccountTypeName</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label>Account Name:</label>
+            <div>
+                <InputText @bind-Value="newAccount.AccountName" />
+                <ValidationMessage For="@(() => newAccount.AccountName)" />
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label>Balance:</label>
+            <div>
+                <InputNumber @bind-Value="newAccount.Balance" />
+                <ValidationMessage For="@(() => newAccount.Balance)" />
+            </div>
+        </div>
+        @if (newAccount.AccountTypeID == 5010 || newAccount.AccountTypeID == 5011)
+        {
+            <div class="form-field">
+                <label>Category:</label>
+                <select class="form-control" @bind="newAccount.CategoryID">
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.CategoryID">@category.Category</option>
+                    }
+                </select>
+            </div>
+            <div class="form-field">
+                <label>Payment Due Date:</label>
+                <div>
+                    <InputDate @bind-Value="newAccount.PaymentDueDate" />
+                    <ValidationMessage For="@(() => newAccount.PaymentDueDate)" />
+                </div>
+            </div>
+        }
+        @if (newAccount.AccountTypeID == 5010)
+        {
+            <div class="form-field">
+                <label>Balance Limit:</label>
+                <div>
+                    <InputNumber @bind-Value="newAccount.BalanceLimit" />
+                    <ValidationMessage For="@(() => newAccount.BalanceLimit)" />
+                </div>
+            </div>
+            <div class="form-field">
+                <label>Perk Percent:</label>
+                <div>
+                    <InputNumber @bind-Value="newAccount.PerkPercent" />
+                    <ValidationMessage For="@(() => newAccount.PerkPercent)" />
+                </div>
+            </div>
+        }
+        <div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </EditForm>
+}
+@code {
+    private AccountViewModel newAccount = new AccountViewModel();
+    private IList<CategoryType> categories;
+    private IList<AccountType> accountTypes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        accountTypes = await _dbAt.GetAccountTypes();
+        categories = await _categoryDB.GetCategories();
+    }
+
+    private async Task InsertAccount()
+    {
+        Account account = new Account
+        {
+            AccountName = newAccount.AccountName,
+            AccountTypeID = newAccount.AccountTypeID,
+            Balance = newAccount.Balance,
+            AccountOpenDate = DateTime.UtcNow,
+            CategoryID = newAccount.CategoryID
+        };
+        await _db.CreateAccount(account);
+
+        NavigationManager.NavigateTo("/Accounts");
+    }
+}

@@ -1,0 +1,41 @@
+﻿@page "/Accounts"
+
+@using BudgetApp.DAL.Models
+@using BudgetApp.DAL.Repository.Interfaces
+@inject IAccountRepository _db
+
+<h1>Accounts</h1>
+
+@if (accounts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Account Name:</th>
+                <th>Balance:</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var account in accounts)
+            {
+                <tr>
+                    <td>@account.AccountName</td>
+                    <td>@account.Balance.ToString("0.00")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IList<Account> accounts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        accounts = await _db.GetAccounts();
+    }
+}

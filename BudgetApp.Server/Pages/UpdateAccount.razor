@@ -1,0 +1,122 @@
+﻿@page "/UpdateAccount/{AccountNum}"
+
+@using BudgetApp.Server.Models
+@using BudgetApp.DAL.Queries
+@using BudgetApp.DAL.Models
+@using BudgetApp.DAL.Repository.Interfaces
+@inject IAccountRepository _db
+@inject ICategoryRepository _categoryDB
+@inject IAccountTypeRepository _dbAt
+@inject NavigationManager NavigationManager
+
+<h3>UpdateAccount</h3>
+@if (accountTypes == null && categories == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="@getAccount" OnValidSubmit="@Update">
+        <div class="form-field">
+            <label>Account Type:</label>
+            <select class="form-control" @bind="getAccount.AccountTypeID">
+                @foreach (var type in accountTypes)
+                {
+                    <option value="@type.AccountTypeID">@type.AccountTypeName</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label>Account Name:</label>
+            <div>
+                <InputText @bind-Value="getAccount.AccountName" />
+                <ValidationMessage For="@(() => updateAccount.AccountName)" />
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label>Balance:</label>
+            <div>
+                <InputNumber @bind-Value="getAccount.Balance" />
+                <ValidationMessage For="@(() => updateAccount.Balance)" />
+            </div>
+        </div>
+        @if (getAccount.AccountTypeID == 5010 || getAccount.AccountTypeID == 5011)
+        {
+            <div class="form-field">
+                <label>Category:</label>
+                <select class="form-control" @bind="getAccount.CategoryID">
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.CategoryID">@category.Category</option>
+                    }
+                </select>
+            </div>
+            <div class="form-field">
+                <label>Payment Due Date:</label>
+                <div>
+                    <InputDate @bind-Value="getAccount.PaymentDueDate" />
+                    <ValidationMessage For="@(() => updateAccount.PaymentDueDate)" />
+                </div>
+            </div>
+        }
+        @if (getAccount.AccountTypeID == 5010)
+        {
+            <div class="form-field">
+                <label>Balance Limit:</label>
+                <div>
+                    <InputNumber @bind-Value="getAccount.BalanceLimit" />
+                    <ValidationMessage For="@(() => updateAccount.BalanceLimit)" />
+                </div>
+            </div>
+            <div class="form-field">
+                <label>Perk Percent:</label>
+                <div>
+                    <InputNumber @bind-Value="getAccount.PerkPercent" />
+                    <ValidationMessage For="@(() => updateAccount.PerkPercent)" />
+                </div>
+            </div>
+        }
+        <div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </EditForm>
+}
+@code {
+    [Parameter]
+    public int AccountNum { get; set; }
+    private AccountViewModel updateAccount = new AccountViewModel();
+    private GetAccount getAccount = new GetAccount();
+    private IList<AccountType> accountTypes;
+    private IList<CategoryType> categories;
+    //private string CurrentAccountType;
+    //private string CurrentCategory;
+    private int accountId;
+
+    protected override void OnParametersSet()
+    {
+        accountId = AccountNum;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        accountTypes = await _dbAt.GetAccountTypes();
+        categories = await _categoryDB.GetCategories();
+        getAccount = await _db.GetAccountByID(accountId);
+    }
+
+    private async Task Update()
+    {
+        Account account = new Account
+        {
+            AccountName = getAccount.AccountName,
+            AccountTypeID = getAccount.AccountTypeID,
+            Balance = getAccount.Balance,
+            CategoryID = getAccount.CategoryID
+        };
+        await _db.UpdateAccount(account);
+
+        NavigationManager.NavigateTo("/Accounts");
+    }
+}
